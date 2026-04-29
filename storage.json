@@ -1,0 +1,101 @@
+{
+  "users": [
+    {
+      "id": "99",
+      "username": "AdminMaster",
+      "email": "admin@postpal.com",
+      "password": "admin123",
+      "role": "admin"
+    },
+    {
+      "username": "test1",
+      "email": "test@gmail.com",
+      "password": "test123",
+      "role": "user",
+      "created_at": "2026-03-28T07:13:52.703Z",
+      "id": "2tajMOdlXlQ"
+    }
+  ],
+  "posts": [
+    {
+      "id": "1",
+      "topic": "News",
+      "content": "Welcome! This is the first post saved in our JSON file.",
+      "user_id": 99,
+      "username": "AdminMaster",
+      "created_at": "2026-03-28T14:53:18",
+      "likes_count": 0,
+      "comment_count": 0,
+      "status": "APPROVED"
+    },
+    {
+      "topic": "News",
+      "content": "hello oppa arnel",
+      "is_anonymous": false,
+      "username": "Demo User",
+      "created_at": "2026-03-28T07:19:28.933Z",
+      "likes_count": 0,
+      "comment_count": 0,
+      "status": "APPROVED",
+      "id": "0EyrV8i785A"
+    },
+    {
+      "topic": "News",
+      "content": "test3",
+      "is_anonymous": false,
+      "username": "AdminMaster",
+      "created_at": "2026-03-28T07:31:58.258Z",
+      "likes_count": 0,
+      "comment_count": 0,
+      "status": "APPROVED",
+      "id": "UaMKY6wHNmY"
+    },
+    {
+      "topic": "News",
+      "content": "cute ni babs",
+      "is_anonymous": false,
+      "username": "AdminMaster",
+      "created_at": "2026-03-28T07:37:31.068Z",
+      "likes_count": 0,
+      "comment_count": 0,
+      "status": "APPROVED",
+      "id": "_yBNOpso0GA"
+    },
+    {
+      "topic": "Others",
+      "content": "HUMAYO KAYO AT MAGPAKARAMI HUMINGI NG TAWAD ",
+      "is_anonymous": true,
+      "username": "AdminMaster",
+      "created_at": "2026-03-28T07:47:15.936Z",
+      "likes_count": 0,
+      "comment_count": 0,
+      "status": "APPROVED",
+      "id": "7Q19VlakkoU"
+    },
+    {
+      "topic": "Education",
+      "content": "ADD SA JSON FILE NGAYON",
+      "is_anonymous": false,
+      "username": "AdminMaster",
+      "created_at": "2026-03-28T08:06:44.668Z",
+      "likes_count": 0,
+      "comment_count": 0,
+      "status": "APPROVED",
+      "id": "-6GDDtVrgz8"
+    },
+    {
+      "topic": "News",
+      "content": "test2",
+      "is_anonymous": false,
+      "username": "AdminMaster",
+      "created_at": "2026-03-28T08:20:53.053Z",
+      "likes_count": 0,
+      "comment_count": 0,
+      "status": "APPROVED",
+      "id": "GBUN5pJRxxI"
+    }
+  ],
+  "comments": [],
+  "reports": [],
+  "$schema": "./node_modules/json-server/schema.json"
+}
