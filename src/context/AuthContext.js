@@ -1,4 +1,13 @@
-// src/context/AuthContext.js — Global auth state management
+/**
+ * AuthContext.js
+ * 
+ * HOW THIS WORKS:
+ * 1. This file manages the "Login State" of the user across the whole app.
+ * 2. It saves the user's data in the browser's "LocalStorage" so they stay logged in 
+ *    even if they refresh the page.
+ * 3. Any page that needs to know who is logged in can just call useAuth().
+ */
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();

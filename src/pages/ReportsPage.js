@@ -20,9 +20,14 @@ export default function ReportsPage() {
     async function fetchReports() {
         try {
             const res = await API.get('/admin/reports');
-            setReports(res.data);
-        } catch (err) { console.error(err); }
-        finally { setLoading(false); }
+            // Safely handle non-array responses
+            setReports(Array.isArray(res.data) ? res.data : []);
+        } catch (err) { 
+            console.error('Failed to fetch reports:', err); 
+            setReports([]); 
+        } finally { 
+            setLoading(false); 
+        }
     }
 
     async function handleDeletePost(postId, reportId) {

@@ -1,8 +1,17 @@
+/**
+ * index.js
+ * 
+ * HOW THIS WORKS:
+ * 1. This is the "Entry Point" of your React application.
+ * 2. It finds the <div id="root"></div> in your public/index.html.
+ * 3. It "renders" (starts) the App component inside that div.
+ */
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
+import './assets/css/index.css';
 import App from './App';
-import reportWebVitals from './reportWebVitals';
+import reportWebVitals from './js/reportWebVitals';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

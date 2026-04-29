@@ -1,3 +1,13 @@
+/**
+ * CreatePostPage.js
+ * 
+ * HOW THIS WORKS:
+ * 1. This page allows users to write new posts.
+ * 2. It collects the topic, content, and whether the user wants to be anonymous.
+ * 3. When submitted, the post is saved with a "PENDING" status.
+ * 4. PENDING posts must be approved by an Admin before they appear on the Wall.
+ */
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -29,28 +39,78 @@ export default function CreatePostPage() {
 
     function removeImage() { setImage(null); setPreview(null); }
 
+    // Helper function to resize and convert image to Base64
+    // This prevents "Payload Too Large" errors by keeping the image size small
+    const processImage = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800; // Limit width for web use
+                    const MAX_HEIGHT = 600;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Convert to Base64 with reduced quality (0.7)
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    resolve(dataUrl);
+                };
+            };
+            reader.onerror = (error) => reject(error);
+        });
+    };
+
     async function handleSubmit(e) {
         e.preventDefault();
         setError('');
         setLoading(true);
 
-        const newPostData = {
-            topic: form.topic,
-            content: form.content,
-            is_anonymous: form.is_anonymous,
-            username: user?.username || "Guest", // Uses your actual logged-in name!
-            created_at: new Date().toISOString(),
-            likes_count: 0,
-            comment_count: 0,
-            status: 'APPROVED'
-        };
-
         try {
+            let base64Image = null;
+            if (image) {
+                // Compress and convert the image
+                base64Image = await processImage(image);
+            }
+
+            const newPostData = {
+                topic: form.topic,
+                content: form.content,
+                is_anonymous: form.is_anonymous,
+                username: user?.username || "Guest", 
+                user_id: user?.id,
+                created_at: new Date().toISOString(),
+                likes_count: 0,
+                comment_count: 0,
+                status: user?.role === 'admin' ? 'APPROVED' : 'PENDING', // Admins are auto-approved!
+                image: base64Image
+            };
+
             await API.post('/posts', newPostData);
-            setSuccess("Post shared successfully!");
+            setSuccess("Post submitted for moderation!");
             setTimeout(() => navigate('/'), 1500);
         } catch (err) {
-            setError('Failed to create post.');
+            console.error('Submission error:', err);
+            setError('Failed to create post. The image might be too large or there was a server error.');
         } finally {
             setLoading(false);
         }

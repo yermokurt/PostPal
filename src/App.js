@@ -1,4 +1,15 @@
-// src/App.js — Main router setup for PostPal
+/**
+ * App.js
+ * 
+ * HOW THIS WORKS:
+ * 1. This is the "Brain" of your application's navigation.
+ * 2. We use React Router to define different "Routes" (pages) like /login, /register, and /.
+ * 3. We also have "PrivateRoutes" and "AdminRoutes" to protect certain pages from 
+ *    users who aren't logged in or aren't admins.
+ * 4. AuthProvider and ThemeProvider wrap the app to provide user data and styling 
+ *    to every component.
+ */
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -13,6 +24,7 @@ import ProfilePage from './pages/ProfilePage';
 import AdminModerationPage from './pages/AdminModerationPage';
 import ReportsPage from './pages/ReportsPage';
 import PdfReportPage from './pages/PdfReportPage';
+import UserManagementPage from './pages/UserManagementPage'; // New!
 
 // Protect routes that require login
 function PrivateRoute({ children }) {
@@ -43,11 +55,12 @@ function AppRoutes() {
       {/* Protected routes */}
       <Route path="/create" element={<PrivateRoute><CreatePostPage /></PrivateRoute>} />
       <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
-
-      {/* Admin-only routes */}
+      
+      {/* Admin Specific Routes */}
       <Route path="/admin/moderation" element={<AdminRoute><AdminModerationPage /></AdminRoute>} />
       <Route path="/admin/reports" element={<AdminRoute><ReportsPage /></AdminRoute>} />
-      <Route path="/admin/report" element={<AdminRoute><PdfReportPage /></AdminRoute>} />
+      <Route path="/admin/analytics" element={<AdminRoute><PdfReportPage /></AdminRoute>} />
+      <Route path="/admin/users" element={<AdminRoute><UserManagementPage /></AdminRoute>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" />} />

@@ -1,4 +1,13 @@
-// src/pages/AdminModerationPage.js — Admin Moderation (Glassmorphism Light/Dark)
+/**
+ * AdminModerationPage.js
+ * 
+ * HOW THIS WORKS:
+ * 1. This page is only accessible to users with the "admin" role.
+ * 2. It fetches all posts that have a "PENDING" status.
+ * 3. The Admin can Approve (changes status to APPROVED) or Reject (changes status to REJECTED).
+ * 4. It also shows system-wide stats like total users and total posts.
+ */
+
 import React, { useState, useEffect } from 'react';
 import API from '../api/json';
 import { CheckCircle, XCircle, Trash2, Clock, Users, FileText, AlertTriangle, Flag, Shield } from 'lucide-react';
@@ -17,31 +26,44 @@ export default function AdminModerationPage() {
 
     async function fetchPending() {
         try {
+            // Our API helper has a virtual route for this
             const res = await API.get('/admin/pending');
             const data = Array.isArray(res.data) ? res.data : [];
             setPosts(data);
-        } catch (err) { console.error(err); }
+        } catch (err) { console.error('Failed to load pending posts:', err); }
         finally { setLoading(false); }
     }
 
     async function fetchStats() {
         try {
+            // Our API helper combines users and posts data for this
             const res = await API.get('/admin/stats');
             setStats(res.data || {});
-        } catch (err) { }
+        } catch (err) { console.error('Failed to load stats:', err); }
     }
 
     async function handleApprove(id) {
         try {
-            await API.post(`/admin/posts/${id}/approve`);
+            // Standard json-server: PATCH updates only the fields we send
+            await API.patch(`/posts/${id}`, { status: 'APPROVED' });
+            
+            // Remove from the list on screen
             setPosts(prev => prev.filter(p => p.id !== id));
+            
+            // Update stats counter
             setStats(s => ({ ...s, pending_posts: Math.max(0, (s.pending_posts || 0) - 1) }));
         } catch (err) { alert('Failed to approve post.'); }
     }
 
     async function handleReject(id) {
+        if (!rejectReason.trim()) return alert('Please provide a reason for rejection.');
         try {
-            await API.post(`/admin/posts/${id}/reject`, { reason: rejectReason });
+            // Update status and save the reason
+            await API.patch(`/posts/${id}`, { 
+                status: 'REJECTED', 
+                rejection_reason: rejectReason 
+            });
+            
             setPosts(prev => prev.filter(p => p.id !== id));
             setRejectingId(null);
             setRejectReason('');
@@ -51,7 +73,8 @@ export default function AdminModerationPage() {
     async function handleDelete(id) {
         if (!window.confirm('Permanently delete this post?')) return;
         try {
-            await API.delete(`/admin/posts/${id}`);
+            // Standard json-server: DELETE /posts/ID
+            await API.delete(`/posts/${id}`);
             setPosts(prev => prev.filter(p => p.id !== id));
         } catch (err) { alert('Failed to delete post.'); }
     }
@@ -88,7 +111,7 @@ export default function AdminModerationPage() {
                         </div>
                         <div className="flex items-center gap-4">
                             <div className="bg-[#2b2f5a] p-4 text-white">
-                                <span className="block text-[8px] font-black uppercase tracking-widest opacity-60 mb-1">Pending</span>
+                                <span className="block text-[8px] font-black uppercase tracking-widest opacity-60 mb-1">Queue Size</span>
                                 <span className="flex items-center justify-center text-2xl font-black tabular-nums leading-none tracking-tight">
                                     {posts.length}
                                 </span>
@@ -148,7 +171,7 @@ export default function AdminModerationPage() {
                                             </div>
                                         </div>
                                         <div className="bg-[#fffbeb] text-[#92400e] text-[9px] font-black px-4 py-1.5 border-2 border-[#fde68a] uppercase tracking-widest">
-                                            PRIORITY_01
+                                            PENDING_REVIEW
                                         </div>
                                     </div>
 
@@ -156,15 +179,15 @@ export default function AdminModerationPage() {
                                     <div className="bg-[#fbfcff] border border-[#f0f0f0] p-6 mb-8 hover:bg-white transition-colors">
                                         <p className="text-[#2b2f5a] text-lg leading-relaxed whitespace-pre-wrap font-medium">{post.content}</p>
 
-                                        {post.image_path && (
-                                            <div className="mt-6 border-4 border-[#f0f0f0] shadow-sm">
-                                                <img
-                                                    src={post.image || post.image_path}
-                                                    alt="Post"
-                                                    className="w-full max-h-[450px] object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-                                                />
-                                            </div>
-                                        )}
+                                        {post.image || post.image_path ? (
+                                             <div className="mt-6 border-4 border-[#f0f0f0] shadow-sm">
+                                                 <img
+                                                     src={post.image || post.image_path}
+                                                     alt="Post"
+                                                     className="w-full max-h-[450px] object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                                                 />
+                                             </div>
+                                         ) : null}
                                     </div>
 
                                     {/* Actions */}
@@ -192,10 +215,10 @@ export default function AdminModerationPage() {
                                     {/* Reject Reason Form */}
                                     {rejectingId === post.id && (
                                         <div className="mt-8 p-8 bg-[#fffbeb] border-2 border-[#fde68a] animate-fade-in">
-                                            <label className="block text-[10px] font-black text-[#92400e]/70 uppercase tracking-[0.2em] mb-4 ml-1">Refusal_Justification_String</label>
+                                            <label className="block text-[10px] font-black text-[#92400e]/70 uppercase tracking-[0.2em] mb-4 ml-1">Reason for Rejection</label>
                                             <input
                                                 type="text"
-                                                placeholder="Enter reason code..."
+                                                placeholder="Enter reason..."
                                                 value={rejectReason}
                                                 onChange={e => setRejectReason(e.target.value)}
                                                 className="w-full neumo-input border-2 border-[#fde68a] bg-white px-5 py-4 text-[#92400e] placeholder-[#92400e]/40 focus:border-[#d97706] transition-colors mb-6"
@@ -205,10 +228,10 @@ export default function AdminModerationPage() {
                                                     onClick={() => handleReject(post.id)}
                                                     className="flex-1 bg-[#d97706] hover:bg-[#b45309] text-white font-black py-4 border-2 border-[#92400e] shadow-[4px_4px_0_0_#92400e] active:shadow-none active:translate-x-1 active:translate-y-1 transition-all uppercase text-[10px] tracking-widest"
                                                 >
-                                                    Reject Post
+                                                    Confirm Reject
                                                 </button>
                                                 <button
-                                                    onClick={() => setRejectingId(null)}
+                                                    onClick={() => { setRejectingId(null); setRejectReason(''); }}
                                                     className="flex-1 bg-white hover:bg-[#f0f0f0] text-[#5f6487] font-black py-4 border-2 border-[#c0c0c0] transition-all uppercase text-[10px] tracking-widest"
                                                 >
                                                     Cancel
@@ -225,3 +248,4 @@ export default function AdminModerationPage() {
         </div>
     );
 }
+

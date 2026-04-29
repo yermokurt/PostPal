@@ -1,4 +1,13 @@
-// src/pages/WallPage.js — Modern SaaS-style Community Feed
+/**
+ * WallPage.js
+ * 
+ * HOW THIS WORKS:
+ * 1. This is the main "Social Feed" of the app.
+ * 2. When the page loads, it asks the API for all posts using fetchPosts().
+ * 3. Users can filter posts by category (News, Education, etc.).
+ * 4. Logged-in users can like posts, add comments, and report inappropriate content.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -19,23 +28,62 @@ export default function WallPage() {
     async function fetchPosts() {
         try {
             const res = await API.get('/posts');
-            setPosts(res.data);
-        } catch (err) { console.error('Failed to load posts:', err); }
-        finally { setLoading(false); }
+            // Ensure data is an array to prevent .filter or .map errors
+            const allPosts = Array.isArray(res.data) ? res.data : [];
+            // Show only approved posts on the main wall
+            const approvedPosts = allPosts.filter(p => p.status === 'APPROVED');
+            setPosts(approvedPosts);
+        } catch (err) { 
+            console.error('Failed to load posts:', err); 
+            setPosts([]); // Fallback to empty array
+        } finally { 
+            setLoading(false); 
+        }
     }
 
     async function handleLike(postId) {
         if (!user) return alert('Please login to like posts.');
         try {
             const postToLike = posts.find(p => p.id === postId);
-            const newLikesCount = (postToLike.likes_count || 0) + 1;
             
-            // Updating ONLY the likes_count field (very efficient)
-            await API.patch(`/posts/${postId}`, { likes_count: newLikesCount });
+            // Check if user already liked the post
+            const likedBy = Array.isArray(postToLike.liked_by) ? postToLike.liked_by : [];
+            const hasLiked = likedBy.includes(user.id);
             
-            // Refresh the screen
-            fetchPosts();
-        } catch (err) { console.error('Like error:', err); }
+            let newLikedBy;
+            let newLikesCount;
+
+            if (hasLiked) {
+                // UNLIKE: Remove user ID and decrement count
+                newLikedBy = likedBy.filter(id => id !== user.id);
+                newLikesCount = Math.max(0, (postToLike.likes_count || 0) - 1);
+            } else {
+                // LIKE: Add user ID and increment count
+                newLikedBy = [...likedBy, user.id];
+                newLikesCount = (postToLike.likes_count || 0) + 1;
+            }
+
+            // Update the post on the server
+            await API.patch(`/posts/${postId}`, { 
+                likes_count: newLikesCount,
+                liked_by: newLikedBy 
+            });
+
+            // Update the local state so the UI changes immediately
+            setPosts(prev => prev.map(p => 
+                p.id === postId ? { ...p, likes_count: newLikesCount, liked_by: newLikedBy } : p
+            ));
+        } catch (err) { 
+            console.error('Failed to toggle like:', err); 
+        }
+    }
+
+    async function handleDeletePost(postId) {
+        if (!window.confirm('System Alert: Proceed with post termination? This action is irreversible.')) return;
+        try {
+            await API.delete(`/posts/${postId}`);
+            setPosts(prev => prev.filter(p => p.id !== postId));
+        } catch (err) { alert('Failed to delete post.'); }
     }
 
     const filtered = filterCategory === 'All' ? posts : posts.filter(p => p.topic === filterCategory);
@@ -121,20 +169,6 @@ export default function WallPage() {
                                         Create Post
                                     </button>
                                 </div>
-                                <div className="mt-8 flex flex-col items-center gap-4 pb-6 border-b-2 border-dashed border-[#2b2f5a]/20">
-                                    <button
-                                        onClick={() => {
-                                            if (posts.length === 0) return alert("No posts available!");
-                                            const latest = posts[posts.length - 1];
-                                            alert(`LATEST POST DATA\n------------------\nAUTHOR: ${latest.username}\nCONTENT: ${latest.content}\nDATE: ${new Date(latest.created_at).toLocaleString()}`);
-                                        }}
-                                        className="px-6 py-2 bg-[#10b981] text-white text-[9px] font-black uppercase tracking-[0.2em] border-2 border-t-[#34d399] border-l-[#34d399] border-r-[#064e3b] border-b-[#064e3b] shadow-[4px_4px_0_0_#00000020] hover:bg-[#059669] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center gap-3"
-                                    >
-                                        <div className="w-2 h-2 bg-white animate-pulse" />
-                                        Fetch Latest Data Stream
-                                    </button>
-                                    <p className="text-[8px] font-black text-[#8d92b3] uppercase tracking-widest opacity-40">System_Status: Operational</p>
-                                </div>
                             </div>
                         )}
 
@@ -153,6 +187,7 @@ export default function WallPage() {
                                         user={user}
                                         onLike={handleLike}
                                         onDeleteComment={fetchPosts}
+                                        onDeletePost={handleDeletePost}
                                     />
                                 ))
                             )}
@@ -165,7 +200,7 @@ export default function WallPage() {
 }
 
 // ─── PostCard Component ─────────────────────────────────────────
-function PostCard({ post, user, onLike, onDeleteComment }) {
+function PostCard({ post, user, onLike, onDeleteComment, onDeletePost }) {
     const [showComments, setShowComments] = useState(false);
     const [comments, setComments] = useState([]);
     const [commentText, setCommentText] = useState('');
@@ -175,10 +210,16 @@ function PostCard({ post, user, onLike, onDeleteComment }) {
     async function fetchComments() {
         setLoadingComments(true);
         try {
-            const res = await API.get(`/posts/${post.id}/comments`);
-            setComments(res.data);
-        } catch (err) { console.error(err); }
-        finally { setLoadingComments(false); }
+            // Using query param is more reliable for json-server relationships
+            const res = await API.get(`/comments?postId=${post.id}`);
+            // Ensure data is an array
+            setComments(Array.isArray(res.data) ? res.data : []);
+        } catch (err) { 
+            console.error('Failed to fetch comments:', err); 
+            setComments([]);
+        } finally { 
+            setLoadingComments(false); 
+        }
     }
 
     function toggleComments() {
@@ -193,21 +234,39 @@ function PostCard({ post, user, onLike, onDeleteComment }) {
             const newComment = {
                 content: commentText,
                 username: user.username,
+                postId: post.id, // json-server expects postId for relationship
                 created_at: new Date().toISOString()
             };
+
+            // 1. Save the comment
+            const res = await API.post('/comments', newComment);
             
-            const res = await API.post(`/posts/${post.id}/comments`, newComment);
+            // 2. Update the post's comment count (manual because json-server doesn't do it)
+            await API.patch(`/posts/${post.id}`, {
+                comment_count: (post.comment_count || 0) + 1
+            });
+
             setComments(prev => [...prev, res.data]);
             setCommentText('');
-            onDeleteComment(); // Refreshes the comment count on the Wall
-        } catch (err) { alert('Failed to comment.'); }
+            if (onDeleteComment) onDeleteComment(); // Refresh parent stats
+        } catch (err) { 
+            console.error('Comment Error:', err);
+            alert('Failed to add comment.'); 
+        }
     }
 
     async function handleDeleteComment(commentId) {
         try {
-            await API.delete(`/admin/comments/${commentId}`);
+            // json-server expects /comments/ID for deletion
+            await API.delete(`/comments/${commentId}`);
+            
+            // Decrement post comment count
+            await API.patch(`/posts/${post.id}`, {
+                comment_count: Math.max(0, (post.comment_count || 0) - 1)
+            });
+
             setComments(prev => prev.filter(c => c.id !== commentId));
-            onDeleteComment();
+            if (onDeleteComment) onDeleteComment();
         } catch (err) { alert('Failed to delete comment.'); }
     }
 
@@ -258,11 +317,26 @@ function PostCard({ post, user, onLike, onDeleteComment }) {
                             </div>
                         </div>
                     </div>
-                    {user && user.role !== 'admin' && (
-                        <button onClick={() => setShowReportModal(true)} className="control-btn !w-8 !h-8 !bg-[#fbe3e3] !border-[#b25a5a] text-[#b25a5a]" title="Report post">
-                            <Flag size={14} />
-                        </button>
-                    )}
+                    <div className="flex gap-2">
+                        {(user?.role === 'admin' || user?.id == post.user_id) && (
+                            <button 
+                                onClick={() => onDeletePost(post.id)} 
+                                className="control-btn !w-8 !h-8 !bg-[#fbe3e3] !border-[#b25a5a] text-[#b25a5a]" 
+                                title="Delete post"
+                            >
+                                <Trash2 size={14} />
+                            </button>
+                        )}
+                        {user && user.role !== 'admin' && (
+                            <button 
+                                onClick={() => setShowReportModal(true)} 
+                                className="control-btn !w-8 !h-8 !bg-white !border-[#c0c0c0] text-[#8d92b3]" 
+                                title="Report post"
+                            >
+                                <Flag size={14} />
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Content Section */}
@@ -288,8 +362,8 @@ function PostCard({ post, user, onLike, onDeleteComment }) {
                             onClick={() => onLike(post.id)}
                             className="flex items-center gap-3 group"
                         >
-                            <div className={`hybrid-icon ${post.likes_count > 0 ? 'bg-[#fbe3e3] border-[#b25a5a] shadow-[#b25a5a]/20' : ''}`}>
-                                <Heart size={20} className={post.likes_count > 0 ? 'fill-[#b25a5a] text-[#b25a5a]' : 'text-[#2b2f5a]'} />
+                            <div className={`hybrid-icon ${(post.liked_by || []).includes(user?.id) ? 'bg-[#fbe3e3] border-[#b25a5a] shadow-[#b25a5a]/20' : ''}`}>
+                                <Heart size={20} className={(post.liked_by || []).includes(user?.id) ? 'fill-[#b25a5a] text-[#b25a5a]' : 'text-[#2b2f5a]'} />
                             </div>
                             <span className="font-black text-sm text-[#2b2f5a] tabular-nums">{post.likes_count}</span>
                         </button>
@@ -325,14 +399,16 @@ function PostCard({ post, user, onLike, onDeleteComment }) {
                                                 className="w-full h-full object-cover"
                                             />
                                         ) : (
-                                            c.username.charAt(0).toUpperCase()
+                                            (c.username || "👤").charAt(0).toUpperCase()
                                         )}
                                     </div>
                                     <div className="flex-1 bg-[#f7f8fc] rounded-2xl p-4 border border-[#e8ebf5] hover:bg-white transition-colors duration-300">
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="flex items-center gap-3">
                                                 <span className="text-sm font-bold text-[#2b2f5a]">{c.username}</span>
-                                                <span className="text-[11px] text-[#8d92b3] font-bold uppercase tracking-wider">{new Date(c.created_at).toLocaleDateString()}</span>
+                                                <span className="text-[11px] text-[#8d92b3] font-bold uppercase tracking-wider">
+                                                    {c.created_at ? new Date(c.created_at).toLocaleDateString() : 'JUST NOW'}
+                                                </span>
                                             </div>
                                             {user?.role === 'admin' && (
                                                 <button onClick={() => handleDeleteComment(c.id)} className="text-[#b25a5a] hover:opacity-70 transition p-1">

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/json';
-import { Heart, FileText, Clock, Activity, Edit3, Save, User } from 'lucide-react';
+import { Heart, FileText, Clock, Activity, Edit3, Save, User, Trash2 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -12,18 +12,25 @@ export default function ProfilePage() {
     const [stats, setStats] = useState({ totalPosts: 0, totalLikes: 0 });
     const [loading, setLoading] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [showHistory, setShowHistory] = useState(false); // New state to control visibility
 
     useEffect(() => { fetchUserData(); }, []);
 
     async function fetchUserData() {
         try {
             const res = await API.get('/posts/user');
-            const userPosts = res.data;
+            // Ensure we always have an array, even if the server returns an error or empty object
+            const userPosts = Array.isArray(res.data) ? res.data : [];
             setPosts(userPosts);
+
             const totalLikes = userPosts.reduce((sum, p) => sum + (p.likes_count || 0), 0);
             setStats({ totalPosts: userPosts.length, totalLikes });
-        } catch (err) { console.error('Failed to load profile:', err); }
-        finally { setLoading(false); }
+        } catch (err) {
+            console.error('Failed to load profile:', err);
+            setPosts([]); // Fallback to empty array on error
+        } finally {
+            setLoading(false);
+        }
     }
 
     function handleExportPDF() {
@@ -130,15 +137,14 @@ export default function ProfilePage() {
                                     <p className="text-[#8d92b3] text-[10px] font-black uppercase tracking-[0.3em]">Verified Member</p>
                                     <p className="text-[#5f6487] font-bold tracking-tight">{user?.email}</p>
                                 </div>
+                                <button
+                                    onClick={handleEditProfile}
+                                    className="neumo-button px-6 py-3 mt-6 flex items-center gap-3 text-xs !rounded-none border-2 border-[#2b2f5a] bg-white hover:bg-[#7ea7ff] hover:text-white transition-all shadow-[4px_4px_0_0_#2b2f5a]"
+                                >
+                                    <Edit3 size={16} /> Edit Profile
+                                </button>
                             </div>
                         </div>
-
-                        <button
-                            onClick={handleEditProfile}
-                            className="neumo-button px-10 py-5 flex items-center gap-3 text-sm !rounded-none border-2 border-[#2b2f5a] bg-white hover:bg-[#7ea7ff] hover:text-white transition-all shadow-[6px_6px_0_0_#2b2f5a]"
-                        >
-                            <Edit3 size={18} /> Edit Profile
-                        </button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-10">
@@ -164,7 +170,7 @@ export default function ProfilePage() {
                         <div className="hybrid-icon mb-6 bg-[#eef3ff]">
                             <FileText size={24} className="text-[#7ea7ff]" />
                         </div>
-                        <div className="text-5xl font-black text-[#f0f0f0] mb-1 tabular-nums">{stats.totalPosts}</div>
+                        <div className="text-5xl font-black text-[#2b2f5a] mb-1 tabular-nums">{stats.totalPosts}</div>
                         <div className="text-[10px] font-black text-[#8d92b3] uppercase tracking-[0.2em]">Posts Authored</div>
                     </div>
                 </div>
@@ -217,13 +223,39 @@ export default function ProfilePage() {
                 <div className="p-8 bg-[#fdfdfd]">
                     {loading ? (
                         <div className="py-20 text-center animate-pulse text-[#8d92b3] font-black uppercase tracking-[0.2em]">Resuming...</div>
+                    ) : !showHistory ? (
+                        <div className="py-20 text-center border-4 border-dashed border-[#c0c0c0] bg-[#f8f9ff]">
+                            <FileText size={48} className="mx-auto text-[#7ea7ff]/20 mb-6" />
+                            <p className="text-[10px] font-black text-[#2b2f5a] uppercase tracking-[0.3em] mb-6">Archive Protected</p>
+                            <button
+                                onClick={() => setShowHistory(true)}
+                                className="neumo-button px-8 py-4 bg-[#2b2f5a] text-white font-black uppercase text-[10px] tracking-widest shadow-[4px_4px_0_0_#7ea7ff] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+                            >
+                                Fetch History
+                            </button>
+                        </div>
                     ) : posts.length === 0 ? (
                         <div className="py-20 text-center bg-[#f0f0f0] border-4 border-dashed border-[#c0c0c0]">
                             <Clock size={48} className="mx-auto text-[#8d92b3]/20 mb-6" />
-                            <p className="text-[#8d92b3] font-black text-[10px] uppercase tracking-[0.3em]">No Posts</p>
+                            <p className="text-[#8d92b3] font-black text-[10px] uppercase tracking-[0.3em]">No Posts Found</p>
+                            <button 
+                                onClick={() => setShowHistory(false)} 
+                                className="mt-6 px-6 py-2 bg-white border-2 border-[#c0c0c0] text-[9px] font-black text-[#8d92b3] uppercase tracking-widest hover:bg-[#f0f0f0] transition-all"
+                            >
+                                Close Archive
+                            </button>
                         </div>
                     ) : (
                         <div className="space-y-4">
+                            <div className="flex justify-between items-center mb-6">
+                                <span className="text-[9px] font-black text-[#8d92b3] uppercase tracking-widest">Displaying {posts.length} records</span>
+                                <button 
+                                    onClick={() => setShowHistory(false)} 
+                                    className="px-6 py-2 bg-[#fbe3e3] border-2 border-[#b25a5a] text-[9px] font-black text-[#b25a5a] uppercase tracking-widest hover:bg-[#b25a5a] hover:text-white transition-all shadow-[2px_2px_0_0_#b25a5a] active:shadow-none active:translate-x-0.5 active:translate-y-0.5"
+                                >
+                                    Hide Archive
+                                </button>
+                            </div>
                             {posts.map(post => (
                                 <div key={post.id} className="bg-white border-2 border-[#e8ebf5] p-6 hover:border-[#7ea7ff] hover:shadow-[4px_4px_0_0_#7ea7ff15] transition-all group relative">
                                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-4">
@@ -243,9 +275,18 @@ export default function ProfilePage() {
                                     <div className="p-4 bg-[#fbfbff] border border-[#f0f0f0] shadow-inner mb-4">
                                         <p className="text-[#2b2f5a] font-medium leading-relaxed line-clamp-2">{post.content}</p>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <Heart size={14} className="text-[#b25a5a]" />
-                                        <span className="text-[10px] font-black text-[#8d92b3] uppercase tracking-[0.1em]">{post.likes_count} Units Received</span>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Heart size={14} className="text-[#b25a5a]" />
+                                            <span className="text-[10px] font-black text-[#8d92b3] uppercase tracking-[0.1em]">{post.likes_count} Units Received</span>
+                                        </div>
+                                        <button 
+                                            onClick={() => handleDeletePost(post.id)}
+                                            className="p-2 text-[#b25a5a] hover:bg-[#fbe3e3] border-2 border-transparent hover:border-[#b25a5a] transition-all"
+                                            title="Delete permanent record"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
                                     </div>
 
                                     {/* Small retro corner detail */}
@@ -261,6 +302,15 @@ export default function ProfilePage() {
             <EditProfileModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} user={user} />
         </div>
     );
+}
+
+// Helper: Handle Post Deletion
+async function handleDeletePost(postId) {
+    if (!window.confirm('PROTOCOL WARNING: Deleting this record is permanent. Proceed?')) return;
+    try {
+        await API.delete(`/posts/${postId}`);
+        window.location.reload(); // Quickest way to refresh stats and history
+    } catch (err) { alert('Failed to delete post.'); }
 }
 
 // Edit Profile Modal Component

@@ -1,7 +1,17 @@
-// src/pages/PdfReportPage.js — Admin PDF Report (Glassmorphism Light/Dark)
+/**
+ * PdfReportPage.js
+ * 
+ * HOW THIS WORKS:
+ * 1. This page allows Admins to generate a formal PDF report of the app's activity.
+ * 2. It fetches analytical data (totals, user stats, top posts) from the API.
+ * 3. It uses the "jspdf" and "jspdf-autotable" libraries to draw a professional 
+ *    PDF document directly in the browser.
+ */
+
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // Added for completeness if needed
 import API from '../api/json';
-import { FileDown, Users, Heart, FileText, BarChart2, Loader, TrendingUp } from 'lucide-react';
+import { FileDown, Users, Heart, FileText, BarChart2, Loader, TrendingUp, Flag } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -66,7 +76,14 @@ export default function PdfReportPage() {
         doc.setTextColor(30, 41, 59); doc.setFontSize(13); doc.text('Top 20 Posts by Likes', 14, afterTopics);
         autoTable(doc, {
             startY: afterTopics + 4, head: [['#', 'Author', 'Category', 'Likes', 'Date', 'Content Preview']],
-            body: data.topPosts.map((p, i) => [i + 1, p.username + (p.role === 'admin' ? ' ★' : ''), p.topic, p.likes_count, new Date(p.created_at).toLocaleDateString(), p.content.length > 80 ? p.content.substring(0, 80) + '…' : p.content]),
+            body: (data.topPosts || []).map((p, i) => [
+                i + 1,
+                (p.username || 'Unknown') + (p.role === 'admin' ? ' ★' : ''),
+                p.topic || 'N/A',
+                p.likes_count || 0,
+                p.created_at ? new Date(p.created_at).toLocaleDateString() : 'N/A',
+                (p.content || '').length > 80 ? p.content.substring(0, 80) + '…' : (p.content || '')
+            ]),
             headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold', fontSize: 8 }, bodyStyles: { fontSize: 7.5 }, alternateRowStyles: { fillColor: [248, 250, 252] },
             columnStyles: { 0: { cellWidth: 8, halign: 'center' }, 1: { cellWidth: 25 }, 2: { cellWidth: 22 }, 3: { cellWidth: 12, halign: 'center' }, 4: { cellWidth: 22 }, 5: { cellWidth: 'auto' } }, margin: { left: 14, right: 14 }, theme: 'grid'
         });
@@ -150,7 +167,7 @@ export default function PdfReportPage() {
                                     { label: 'Total Posts', value: data.totals.total_posts, icon: <FileText size={22} />, color: '#10b981' },
                                     { label: 'Total Likes', value: data.totals.total_likes, icon: <Heart size={22} />, color: '#f43f5e' },
                                     { label: 'Total Comments', value: data.totals.total_comments, icon: <BarChart2 size={22} />, color: '#8b5cf6' },
-                                    { label: 'Total Reports', value: data.totals.total_reports, icon: <FileDown size={22} />, color: '#f59e0b' },
+                                    { label: 'Total Reports', value: data.totals.total_reports, icon: <Flag size={22} />, color: '#f59e0b' },
                                 ].map(s => (
                                     <div key={s.label} className="bg-white border-2 border-[#c0c0c0] p-6 flex flex-col items-center group hover:border-[#7ea7ff] transition-all">
                                         <div className="hybrid-icon mb-4 !w-12 !h-12" style={{ color: s.color }}>
@@ -169,7 +186,7 @@ export default function PdfReportPage() {
                                         <Users size={18} className="text-[#7ea7ff]" />
                                         <h3 className="text-[10px] font-black text-[#2b2f5a] uppercase tracking-[0.3em]">User Activity Registry</h3>
                                     </div>
-                                    <span className="text-[8px] font-black text-[#8d92b3] uppercase tracking-widest">ROWS_01-10_OF_STREAM</span>
+                                    <span className="text-[8px] font-black text-[#8d92b3] uppercase tracking-widest">Results</span>
                                 </div>
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left">
@@ -177,9 +194,9 @@ export default function PdfReportPage() {
                                             <tr className="bg-white border-b-2 border-[#f0f0f0]">
                                                 <th className="px-8 py-5 text-[9px] font-black text-[#8d92b3] uppercase tracking-widest">Pos</th>
                                                 <th className="px-8 py-5 text-[9px] font-black text-[#8d92b3] uppercase tracking-widest">Handle</th>
-                                                <th className="px-8 py-5 text-[9px] font-black text-[#8d92b3] uppercase tracking-widest">Network_Address</th>
-                                                <th className="px-8 py-5 text-center text-[9px] font-black text-[#8d92b3] uppercase tracking-widest">Objects</th>
-                                                <th className="px-8 py-5 text-center text-[9px] font-black text-[#8d92b3] uppercase tracking-widest">Karma_Idx</th>
+                                                <th className="px-8 py-5 text-[9px] font-black text-[#8d92b3] uppercase tracking-widest">Email Address</th>
+                                                <th className="px-8 py-5 text-center text-[9px] font-black text-[#8d92b3] uppercase tracking-widest">Posts</th>
+                                                <th className="px-8 py-5 text-center text-[9px] font-black text-[#8d92b3] uppercase tracking-widest">Likes</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y border-b border-[#f0f0f0]">
@@ -225,11 +242,11 @@ export default function PdfReportPage() {
                                                 <div className="flex items-center gap-8">
                                                     <div className="text-center">
                                                         <div className="text-sm font-black text-[#2b2f5a] tabular-nums">{t.total_posts}</div>
-                                                        <div className="text-[8px] font-black text-[#8d92b3] uppercase tracking-widest">OBJS</div>
+                                                        <div className="text-[8px] font-black text-[#8d92b3] uppercase tracking-widest">POSTS</div>
                                                     </div>
                                                     <div className="text-center">
                                                         <div className="text-sm font-black text-[#f43f5e] tabular-nums">{t.total_likes}</div>
-                                                        <div className="text-[8px] font-black text-[#8d92b3] uppercase tracking-widest">KRM</div>
+                                                        <div className="text-[8px] font-black text-[#8d92b3] uppercase tracking-widest">LIKES</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -259,13 +276,6 @@ export default function PdfReportPage() {
                                         ))}
                                     </div>
                                 </div>
-                            </div>
-
-                            <div className="p-12 bg-[#f0f0f0] border-4 border-dashed border-[#c0c0c0] flex flex-col items-center text-center">
-                                <BarChart2 size={48} className="text-[#7ea7ff]/20 mb-6" />
-                                <p className="max-w-lg text-[#8d92b3] text-[10px] font-bold leading-relaxed uppercase tracking-[0.2em]">
-                                    Notice: The data visualizer provides real-time parity with the master registry. High-fidelity archival hardcopies are available via the <span className="text-[#2b2f5a] font-black underline decoration-2 underline-offset-4">EXPORT_HARDCOPY</span> directive in the system header.
-                                </p>
                             </div>
                         </div>
                     ))}

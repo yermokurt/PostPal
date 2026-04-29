@@ -1,4 +1,13 @@
-// src/pages/LoginPage.js — Glassmorphism Authentication
+/**
+ * LoginPage.js
+ * 
+ * HOW THIS WORKS:
+ * 1. This page handles user authentication.
+ * 2. When the user clicks "Login", we send their email and password to the API helper.
+ * 3. If the server finds a match in storage.json, it returns the user's data.
+ * 4. We then save that user in our "AuthContext" so the whole app knows who is logged in.
+ */
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';

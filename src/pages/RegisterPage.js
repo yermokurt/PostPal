@@ -1,4 +1,13 @@
-// src/pages/RegisterPage.js — Glassmorphism Registration
+/**
+ * RegisterPage.js
+ * 
+ * HOW THIS WORKS:
+ * 1. This page allows new users to join the platform.
+ * 2. It checks if passwords match and if the password is long enough.
+ * 3. It then sends a POST request to the API to save the new user in storage.json.
+ * 4. Once successful, it automatically takes the user to the Login page.
+ */
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import API from '../api/json';

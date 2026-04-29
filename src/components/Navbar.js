@@ -1,7 +1,16 @@
+/**
+ * Navbar.js
+ * 
+ * HOW THIS WORKS:
+ * 1. This is the navigation bar at the top of every page.
+ * 2. It checks the "user" state to decide which buttons to show (e.g., Login vs Logout).
+ * 3. It also has a built-in clock that updates every second!
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, PenSquare, LayoutDashboard, Flag, Newspaper, Monitor, Clock as ClockIcon, Shield } from 'lucide-react';
+import { LogOut, PenSquare, LayoutDashboard, Flag, Newspaper, Monitor, Clock as ClockIcon, Shield, Users } from 'lucide-react';
 
 export default function Navbar() {
     const { user, logout } = useAuth();
@@ -44,8 +53,9 @@ export default function Navbar() {
                             {user.role === 'admin' && (
                                 <>
                                     <IconButton to="/admin/moderation" icon={<Shield size={18} />} label="Mod" active={location.pathname === '/admin/moderation'} />
+                                    <IconButton to="/admin/users" icon={<Users size={18} />} label="Users" active={location.pathname === '/admin/users'} />
                                     <IconButton to="/admin/reports" icon={<Flag size={18} />} label="Reports" active={location.pathname === '/admin/reports'} />
-                                    <IconButton to="/admin/report" icon={<LayoutDashboard size={18} />} label="Analytics" active={location.pathname === '/admin/report'} />
+                                    <IconButton to="/admin/analytics" icon={<LayoutDashboard size={18} />} label="Analytics" active={location.pathname === '/admin/analytics'} />
                                 </>
                             )}
                         </div>
