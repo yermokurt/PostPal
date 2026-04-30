@@ -117,11 +117,14 @@ const API = {
 
             // Join each report with its post content so the admin knows what was reported
             const enrichedReports = reports.map(r => {
-                const post = posts.find(p => p.id === r.post_id);
+                const post = posts.find(p => p.id == r.post_id);
                 return {
                     ...r,
-                    post_content: post ? post.content : 'Post Deleted',
-                    post_author: post ? post.username : 'Unknown'
+                    status: r.status || 'PENDING',
+                    reporter_name: r.reporter_name || 'Anonymous User',
+                    // Fields expected by ReportsPage UI:
+                    content: post ? post.content : 'Permanent Record Deleted',
+                    topic: post ? post.username : 'Unknown Node'
                 };
             });
             return { data: enrichedReports };
@@ -137,6 +140,19 @@ const API = {
      * POST: Sends new data to the server to be saved.
      */
     post: async (url, data) => {
+        // --- VIRTUAL ROUTE: DISMISS REPORT ---
+        if (url.includes('/dismiss') && url.includes('/admin/reports/')) {
+            const reportId = url.split('/')[3];
+            // We use PATCH to update the status in the real reports table
+            const response = await fetch(`/reports/${reportId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'DISMISSED' })
+            });
+            const updated = await response.json();
+            return { data: updated };
+        }
+
         // --- VIRTUAL ROUTE: LOGIN ---
         if (url === '/login') {
             const res = await fetch('/users');

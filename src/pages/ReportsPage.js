@@ -33,7 +33,7 @@ export default function ReportsPage() {
     async function handleDeletePost(postId, reportId) {
         if (!window.confirm('Delete this post and all related reports?')) return;
         try {
-            await API.delete(`/admin/posts/${postId}`);
+            await API.delete(`/posts/${postId}`);
             setReports(prev => prev.filter(r => r.post_id !== postId));
         } catch (err) { alert('Failed to delete post.'); }
     }
@@ -132,7 +132,7 @@ export default function ReportsPage() {
                                             )}
                                         </div>
                                         <span className="text-[10px] font-black text-[#8d92b3] flex items-center gap-2 uppercase tracking-[0.2em]">
-                                            <Clock size={14} /> {new Date(report.created_at).toLocaleDateString()}
+                                            <Clock size={14} /> {report.created_at ? new Date(report.created_at).toLocaleDateString() : 'LEGACY LOG'}
                                         </span>
                                     </div>
 
@@ -140,7 +140,7 @@ export default function ReportsPage() {
                                     <div className="mb-8 space-y-4 bg-[#f8f9ff] border-2 border-[#f0f2ff] p-6 shadow-inner">
                                         <div className="flex items-start gap-4">
                                             <span className="text-[9px] font-black text-[#8d92b3] uppercase tracking-widest pt-0.5 shrink-0 w-28">Reporter:</span>
-                                            <span className="text-sm font-black text-[#2b2f5a] uppercase">{report.reporter_username}</span>
+                                            <span className="text-sm font-black text-[#2b2f5a] uppercase">{report.reporter_name || 'Anonymous User'}</span>
                                         </div>
                                         {report.details && (
                                             <div className="flex items-start gap-4">

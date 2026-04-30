@@ -345,7 +345,7 @@ function PostCard({ post, user, onLike, onDeleteComment, onDeletePost }) {
                 </div>
 
                 {/* Optional Image */}
-                {post.image_path && (
+                {(post.image || post.image_path) && (
                     <div className="border-2 border-[#2b2f5a] shadow-[4px_4px_0px_#2b2f5a] mb-6 overflow-hidden bg-black">
                         <img
                             src={post.image || post.image_path}
@@ -445,13 +445,13 @@ function PostCard({ post, user, onLike, onDeleteComment, onDeletePost }) {
                 </div>
             )}
 
-            {showReportModal && <ReportModal postId={post.id} onClose={() => setShowReportModal(false)} />}
+            {showReportModal && <ReportModal postId={post.id} user={user} onClose={() => setShowReportModal(false)} />}
         </div>
     );
 }
 
 // ─── Report Modal ──────────────────────────────────────────────
-function ReportModal({ postId, onClose }) {
+function ReportModal({ postId, user, onClose }) {
     const [reason, setReason] = useState('Spam');
     const [details, setDetails] = useState('');
     const [submitted, setSubmitted] = useState(false);
@@ -460,7 +460,14 @@ function ReportModal({ postId, onClose }) {
     async function handleSubmit(e) {
         e.preventDefault();
         try {
-            await API.post('/reports', { post_id: postId, reason, details });
+            await API.post('/reports', { 
+                post_id: postId, 
+                reporter_name: user.username, // NEW! Store who reported it
+                reason, 
+                details,
+                status: 'PENDING',
+                created_at: new Date().toISOString()
+            });
             setSubmitted(true);
             setTimeout(onClose, 1500);
         } catch (err) { setError(err.response?.data?.message || 'Failed to submit report.'); }
