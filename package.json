@@ -9,6 +9,8 @@
     "@testing-library/user-event": "^13.5.0",
     "autoprefixer": "^10.4.27",
     "axios": "^1.13.6",
+    "body-parser": "^2.2.2",
+    "json-server": "^0.17.4",
     "jspdf": "^4.2.0",
     "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.577.0",
@@ -22,7 +24,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "api": "npx json-server --watch storage.json --port 5000",
+    "api": "node server.js",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

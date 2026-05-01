@@ -238,8 +238,8 @@ export default function ProfilePage() {
                         <div className="py-20 text-center bg-[#f0f0f0] border-4 border-dashed border-[#c0c0c0]">
                             <Clock size={48} className="mx-auto text-[#8d92b3]/20 mb-6" />
                             <p className="text-[#8d92b3] font-black text-[10px] uppercase tracking-[0.3em]">No Posts Found</p>
-                            <button 
-                                onClick={() => setShowHistory(false)} 
+                            <button
+                                onClick={() => setShowHistory(false)}
                                 className="mt-6 px-6 py-2 bg-white border-2 border-[#c0c0c0] text-[9px] font-black text-[#8d92b3] uppercase tracking-widest hover:bg-[#f0f0f0] transition-all"
                             >
                                 Close Archive
@@ -249,8 +249,8 @@ export default function ProfilePage() {
                         <div className="space-y-4">
                             <div className="flex justify-between items-center mb-6">
                                 <span className="text-[9px] font-black text-[#8d92b3] uppercase tracking-widest">Displaying {posts.length} records</span>
-                                <button 
-                                    onClick={() => setShowHistory(false)} 
+                                <button
+                                    onClick={() => setShowHistory(false)}
                                     className="px-6 py-2 bg-[#fbe3e3] border-2 border-[#b25a5a] text-[9px] font-black text-[#b25a5a] uppercase tracking-widest hover:bg-[#b25a5a] hover:text-white transition-all shadow-[2px_2px_0_0_#b25a5a] active:shadow-none active:translate-x-0.5 active:translate-y-0.5"
                                 >
                                     Hide Archive
@@ -280,7 +280,7 @@ export default function ProfilePage() {
                                             <Heart size={14} className="text-[#b25a5a]" />
                                             <span className="text-[10px] font-black text-[#8d92b3] uppercase tracking-[0.1em]">{post.likes_count} Units Received</span>
                                         </div>
-                                        <button 
+                                        <button
                                             onClick={() => handleDeletePost(post.id)}
                                             className="p-2 text-[#b25a5a] hover:bg-[#fbe3e3] border-2 border-transparent hover:border-[#b25a5a] transition-all"
                                             title="Delete permanent record"
@@ -344,14 +344,12 @@ function EditProfileModal({ isOpen, onClose, user }) {
                 formData.append('profile_picture', selectedFile);
             }
 
-            const res = await API.put('/users/profile', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            const res = await API.put('/users/profile', formData);
 
             updateUser(res.data.user, res.data.token);
             onClose();
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to update profile.');
+            setError(err.message || 'Failed to update profile.');
         } finally {
             setSaving(false);
         }
@@ -395,12 +393,12 @@ function EditProfileModal({ isOpen, onClose, user }) {
                             </label>
                             <input type="file" id="avatar-upload" className="hidden" accept="image/*" onChange={handleFileChange} />
                         </div>
-                        <span className="text-[10px] font-black text-[#8d92b3] uppercase tracking-[0.2em] mt-8">Capture_Identity_Asset</span>
+                        <span className="text-[10px] font-black text-[#8d92b3] uppercase tracking-[0.2em] mt-8">Profile Picture</span>
                     </div>
 
                     <div className="space-y-6">
                         <div>
-                            <label className="block text-[10px] font-black text-[#8d92b3] uppercase tracking-[0.2em] mb-3 ml-1">Archive_Handle</label>
+                            <label className="block text-[10px] font-black text-[#8d92b3] uppercase tracking-[0.2em] mb-3 ml-1">Username</label>
                             <input
                                 type="text"
                                 value={username}
@@ -410,7 +408,7 @@ function EditProfileModal({ isOpen, onClose, user }) {
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-black text-[#8d92b3] uppercase tracking-[0.2em] mb-3 ml-1">Node_Address</label>
+                            <label className="block text-[10px] font-black text-[#8d92b3] uppercase tracking-[0.2em] mb-3 ml-1">Email Address</label>
                             <input
                                 type="email"
                                 value={email}
@@ -428,7 +426,7 @@ function EditProfileModal({ isOpen, onClose, user }) {
                         disabled={saving}
                         className="px-8 py-3 text-[10px] font-black text-[#8d92b3] uppercase tracking-[0.2em] hover:text-[#2b2f5a] transition disabled:opacity-50"
                     >
-                        HALT_OP
+                        CANCEL
                     </button>
                     <button
                         onClick={handleSave}
@@ -440,7 +438,7 @@ function EditProfileModal({ isOpen, onClose, user }) {
                         ) : (
                             <Save size={18} />
                         )}
-                        {saving ? 'COMMITTING...' : 'WRITE_TO_DISK'}
+                        {saving ? 'COMMITTING...' : 'Save Profile Picture'}
                     </button>
                 </div>
             </div>

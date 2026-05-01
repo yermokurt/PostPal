@@ -138,9 +138,18 @@ export default function ReportsPage() {
 
                                     {/* Info Block */}
                                     <div className="mb-8 space-y-4 bg-[#f8f9ff] border-2 border-[#f0f2ff] p-6 shadow-inner">
-                                        <div className="flex items-start gap-4">
+                                        <div className="flex items-center gap-4">
                                             <span className="text-[9px] font-black text-[#8d92b3] uppercase tracking-widest pt-0.5 shrink-0 w-28">Reporter:</span>
-                                            <span className="text-sm font-black text-[#2b2f5a] uppercase">{report.reporter_name || 'Anonymous User'}</span>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#e8ebf5] bg-white flex items-center justify-center text-[10px] font-black text-[#7ea7ff]">
+                                                    {report.reporter_picture ? (
+                                                        <img src={report.reporter_picture} alt={report.reporter_name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        (report.reporter_name || "👤").charAt(0).toUpperCase()
+                                                    )}
+                                                </div>
+                                                <span className="text-sm font-black text-[#2b2f5a] uppercase">{report.reporter_name || 'Anonymous User'}</span>
+                                            </div>
                                         </div>
                                         {report.details && (
                                             <div className="flex items-start gap-4">

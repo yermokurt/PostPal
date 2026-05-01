@@ -144,8 +144,12 @@ export default function UserManagementPage() {
 
                                     <div className="flex items-start gap-6">
                                         {/* Avatar */}
-                                        <div className={`w-16 h-16 border-4 flex items-center justify-center text-2xl font-black shrink-0 shadow-[4px_4px_0px_rgba(0,0,0,0.1)] ${u.status === 'DEACTIVATED' ? 'bg-[#fbe3e3] border-[#b25a5a] text-[#b25a5a]' : 'bg-white border-[#2b2f5a] text-[#7ea7ff]'}`}>
-                                            {u.username.charAt(0).toUpperCase()}
+                                        <div className={`w-16 h-16 border-4 flex items-center justify-center text-2xl font-black shrink-0 shadow-[4px_4px_0px_rgba(0,0,0,0.1)] overflow-hidden ${u.status === 'DEACTIVATED' ? 'bg-[#fbe3e3] border-[#b25a5a] text-[#b25a5a]' : 'bg-white border-[#2b2f5a] text-[#7ea7ff]'}`}>
+                                            {u.profile_picture ? (
+                                                <img src={u.profile_picture} alt={u.username} className="w-full h-full object-cover" />
+                                            ) : (
+                                                u.username.charAt(0).toUpperCase()
+                                            )}
                                         </div>
 
                                         <div className="flex-1 min-w-0">
