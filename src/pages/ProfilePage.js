@@ -438,7 +438,7 @@ function EditProfileModal({ isOpen, onClose, user }) {
                         ) : (
                             <Save size={18} />
                         )}
-                        {saving ? 'COMMITTING...' : 'Save Profile Picture'}
+                        {saving ? 'COMMITTING...' : 'Save Changes'}
                     </button>
                 </div>
             </div>

@@ -15,7 +15,7 @@ import { User, Mail, Lock, UserPlus, Newspaper } from 'lucide-react';
 
 export default function RegisterPage() {
     const navigate = useNavigate();
-    const [form, setForm] = useState({ username: '', email: '', password: '', confirmPassword: '' });
+    const [form, setForm] = useState({ username: '', email: '', password: '',gender: '', age: '', confirmPassword: '' });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
@@ -31,10 +31,10 @@ export default function RegisterPage() {
 
         setLoading(true);
         try {
-            await API.post('/register', { username: form.username, email: form.email, password: form.password });
+            await API.post('/register', { username: form.username,gender:form.gender , age:form.age, email: form.email, password: form.password });
             setSuccess('Account created! Redirecting to login...');
             setTimeout(() => navigate('/login'), 2000);
-        } catch (err) { setError(err.response?.data?.message || 'Registration failed.'); }
+        } catch (err) { setError(err.message || 'Registration failed.'); }
         finally { setLoading(false); }
     }
 
@@ -85,6 +85,24 @@ export default function RegisterPage() {
                         <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                             <InputField icon={<User size={18} />} label="Username" name="username" value={form.username} onChange={handleChange} placeholder="your_username" />
                             <InputField icon={<Mail size={18} />} label="Email Address" name="email" type="email" value={form.email} onChange={handleChange} placeholder="your.email@example.com" />
+                            <div>
+                                <label className="block text-sm font-bold text-[#5f6487] mb-2 ml-1">Gender</label>
+                                <div className="flex gap-6 relative p-4 rounded-lg border-2 border-[#e2e8f0] bg-[#f8fafc]">
+                                    <label className="flex items-center gap-2 text-sm font-bold text-[#5f6487] cursor-pointer">
+                                        <input type="radio" name="gender" value="Male" checked={form.gender === 'Male'} onChange={handleChange} required className="accent-[#7ea7ff] w-4 h-4 cursor-pointer" />
+                                        Male
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm font-bold text-[#5f6487] cursor-pointer">
+                                        <input type="radio" name="gender" value="Female" checked={form.gender === 'Female'} onChange={handleChange} required className="accent-[#7ea7ff] w-4 h-4 cursor-pointer" />
+                                        Female
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm font-bold text-[#5f6487] cursor-pointer">
+                                        <input type="radio" name="gender" value="Other" checked={form.gender === 'Other'} onChange={handleChange} required className="accent-[#7ea7ff] w-4 h-4 cursor-pointer" />
+                                        Other
+                                    </label>
+                                </div>
+                            </div>
+                            <InputField icon={<Mail size={18} />} label="Age" name="age" type="number" value={form.age} onChange={handleChange} placeholder="20" />
                             <InputField icon={<Lock size={18} />} label="Password" name="password" type="password" value={form.password} onChange={handleChange} placeholder="••••••••" />
                             <InputField icon={<Lock size={18} />} label="Confirm Password" name="confirmPassword" type="password" value={form.confirmPassword} onChange={handleChange} placeholder="••••••••" />
 

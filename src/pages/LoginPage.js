@@ -37,9 +37,7 @@ export default function LoginPage() {
             if (user.role === 'admin') navigate('/admin/moderation');
             else navigate('/');
         } catch (err) {
-            const msg = err.response?.data?.message || 'Login failed. Please try again.';
-            const detail = err.response?.data?.detail;
-            setError(detail ? `${msg} — ${detail}` : msg);
+            setError(err.message || 'Login failed. Please try again.');
         } finally {
             setLoading(false);
         }
